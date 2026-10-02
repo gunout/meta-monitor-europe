@@ -1,0 +1,3 @@
+cd ~/Desktop/europa/backend
+source ../venv/bin/activate
+uvicorn europe_meta:app --reload --port 8001
