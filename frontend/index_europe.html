@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🇪🇺 Meta Monitor Europe — Open Data</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.11.2/dist/dsfr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.11.2/dist/utility/utility.min.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --blue-france:#000091;
+  --blue-france-hi:#1212ff;
+  --blue-france-soft:#e3e3fd;
+  --blue-eu:#003399;
+  --blue-eu-hi:#0055ff;
+  --blue-eu-soft:#e6ecff;
+  --gold-eu:#ffcc00;
+  --red-marianne:#E1000F;
+  --red-marianne-soft:#ffe9e9;
+  --white:#ffffff;
+  --grey-50:#f6f6f6;
+  --grey-100:#eeeeee;
+  --grey-200:#e5e5e5;
+  --grey-500:#929292;
+  --grey-700:#3a3a3a;
+  --grey-900:#1e1e1e;
+  --green-bourgeon:#18753c;
+  --green-emeraude:#00a95f;
+  --yellow-tournesol:#ffb800;
+  --font-mono:'SF Mono',Menlo,Consolas,'Courier New',monospace;
+  --font-sans:'Marianne','system-ui',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+
+html{height:100%}
+body{
+  font-family:var(--font-sans);
+  background:var(--grey-50);
+  color:var(--grey-900);
+  font-size:13px;line-height:1.5;
+  min-height:100%;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--grey-100)}
+::-webkit-scrollbar-thumb{background:var(--grey-500);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--blue-eu)}
+
+.eu-band{
+  height:6px;
+  background:linear-gradient(to right,
+    var(--blue-eu) 0%, var(--blue-eu) 33.33%,
+    var(--gold-eu) 33.33%, var(--gold-eu) 66.66%,
+    var(--white) 66.66%, var(--white) 100%);
+}
+
+.bloc-marque{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;background:var(--white);
+  border-bottom:1px solid var(--grey-200);
+}
+.bloc-marque-logo{
+  font-weight:700;font-size:13px;line-height:1.15;
+  color:var(--blue-eu);letter-spacing:0.3px;
+  text-transform:uppercase;
+  border-right:1px solid var(--grey-200);
+  padding-right:12px;
+}
+.bloc-marque-devise{
+  font-size:10px;font-weight:400;color:var(--grey-700);
+  line-height:1.3;letter-spacing:0.5px;
+}
+.bloc-marque-devise em{
+  display:block;font-style:normal;
+  text-transform:uppercase;letter-spacing:1.2px;
+  font-size:9px;color:var(--grey-500);
+}
+
+.topbar{
+  background:var(--white);
+  border-bottom:1px solid var(--grey-200);
+  display:flex;align-items:center;
+  padding:10px 16px;gap:12px;
+  position:sticky;top:6px;z-index:100;
+  flex-wrap:wrap;
+  box-shadow:0 2px 6px rgba(0,0,0,0.04);
+}
+.brand{
+  font-size:14px;font-weight:700;
+  color:var(--blue-eu);letter-spacing:0.3px;
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;
+}
+.brand .dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--green-emeraude);
+  box-shadow:0 0 0 3px rgba(0,169,95,0.2);
+  animation:pulse 1.8s infinite;flex-shrink:0;
+}
+.brand .dot.offline{
+  background:var(--red-marianne);
+  box-shadow:0 0 0 3px rgba(225,0,15,0.2);
+  animation:none;
+}
+@keyframes pulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(0.85)}
+}
+.brand .sub{
+  color:var(--grey-500);font-weight:400;
+  font-size:12px;font-family:var(--font-mono);
+}
+
+.tabs{
+  display:flex;gap:4px;order:3;width:100%;
+  overflow-x:auto;padding-bottom:2px;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  background:transparent;border:none;
+  color:var(--grey-700);font-size:12px;font-weight:500;
+  padding:8px 14px;border-radius:4px;cursor:pointer;
+  transition:all 0.15s;display:flex;align-items:center;gap:6px;
+  white-space:nowrap;flex-shrink:0;
+  border-bottom:2px solid transparent;
+}
+.tab:hover{background:var(--blue-eu-soft);color:var(--blue-eu)}
+.tab.active{
+  background:var(--blue-eu-soft);
+  color:var(--blue-eu);
+  border-bottom-color:var(--blue-eu);
+  font-weight:700;
+}
+
+.topbar-right{
+  margin-left:auto;display:flex;gap:14px;
+  font-family:var(--font-mono);font-size:11px;
+  align-items:center;flex-wrap:wrap;order:2;
+}
+.topbar-stat{
+  display:flex;gap:5px;color:var(--grey-700);
+  align-items:center;white-space:nowrap;
+}
+.topbar-stat .val{
+  color:var(--blue-eu);font-weight:700;
+  padding:2px 6px;border-radius:3px;background:var(--blue-eu-soft);
+}
+.topbar-stat .val.green{color:var(--green-bourgeon);background:#b8fec9}
+.topbar-stat .val.amber{color:#8a5e00;background:#ffe9b8}
+.topbar-stat .val.red{color:var(--red-marianne);background:var(--red-marianne-soft)}
+
+.app{
+  display:grid;
+  grid-template-columns:300px 1fr 320px;
+  height:calc(100vh - 130px);
+  overflow:hidden;gap:0;
+}
+@media(max-width:1200px){.app{grid-template-columns:260px 1fr 280px}}
+
+.sidebar{
+  background:var(--white);
+  border-right:1px solid var(--grey-200);
+  display:flex;flex-direction:column;
+  overflow:hidden;min-height:0;
+}
+.sb-head{
+  padding:14px 16px;
+  border-bottom:1px solid var(--grey-200);
+  background:var(--grey-50);flex-shrink:0;
+}
+.sb-title{
+  font-size:12px;font-weight:700;
+  color:var(--blue-eu);
+  letter-spacing:0.5px;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.sb-title::before{
+  content:'';width:4px;height:14px;
+  background:var(--gold-eu);
+}
+.sb-count{
+  font-family:var(--font-mono);font-size:11px;
+  color:var(--grey-500);margin-top:6px;
+}
+
+.sb-actions{
+  display:flex;gap:4px;padding:8px 14px;
+  border-bottom:1px solid var(--grey-200);
+  background:var(--grey-50);flex-shrink:0;
+}
+.sb-actions button{
+  flex:1;background:var(--white);
+  border:1px solid var(--grey-200);
+  color:var(--grey-700);
+  font-size:10px;font-weight:600;
+  padding:5px 6px;border-radius:3px;
+  cursor:pointer;transition:all 0.15s;
+  font-family:var(--font-sans);
+}
+.sb-actions button:hover{
+  border-color:var(--blue-eu);
+  color:var(--blue-eu);
+  background:var(--blue-eu-soft);
+}
+
+.sb-search{
+  padding:10px 14px;
+  border-bottom:1px solid var(--grey-200);
+  flex-shrink:0;
+}
+.sb-search input{
+  width:100%;background:var(--white);
+  border:1px solid var(--grey-200);
+  border-radius:4px;color:var(--grey-900);
+  padding:9px 12px;font-size:13px;
+  font-family:var(--font-sans);
+}
+.sb-search input:focus{
+  outline:none;border-color:var(--blue-eu);
+  box-shadow:0 0 0 2px var(--blue-eu-soft);
+}
+
+.sb-list{
+  flex:1;overflow-y:auto;padding:8px;
+  min-height:0;
+}
+
+.portal-item{
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-left:4px solid var(--grey-500);
+  border-radius:4px;
+  padding:8px 10px;margin-bottom:5px;
+  cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;gap:8px;
+}
+.portal-item:hover{
+  border-color:var(--blue-eu);
+  background:var(--blue-eu-soft);
+  transform:translateX(2px);
+}
+.portal-item.active{
+  background:var(--blue-eu-soft);
+  border-color:var(--blue-eu);
+  border-left-color:var(--blue-eu);
+  box-shadow:0 0 0 2px var(--blue-eu-soft);
+}
+.portal-item.active .portal-check{
+  background:var(--blue-eu);
+  border-color:var(--blue-eu);
+  color:var(--white);
+}
+.portal-check{
+  width:16px;height:16px;
+  border:2px solid var(--grey-500);
+  border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:11px;font-weight:700;
+  color:transparent;transition:all 0.15s;
+}
+.portal-flag{font-size:18px;flex-shrink:0}
+.portal-info{flex:1;min-width:0}
+.portal-name{
+  font-size:12px;font-weight:700;
+  color:var(--grey-900);line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.portal-type{
+  font-family:var(--font-mono);font-size:9px;
+  color:var(--grey-500);text-transform:uppercase;
+  margin-top:2px;letter-spacing:0.5px;
+}
+
+.center{
+  background:var(--grey-50);
+  display:flex;flex-direction:column;
+  overflow:hidden;min-height:0;
+}
+
+.search-bar{
+  padding:14px 16px;
+  background:var(--white);
+  border-bottom:1px solid var(--grey-200);
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+}
+.search-bar input[type=text]{
+  flex:1;min-width:200px;
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-radius:4px;color:var(--grey-900);
+  padding:11px 14px;font-size:14px;
+  font-family:var(--font-sans);
+}
+.search-bar input[type=text]:focus{
+  outline:none;border-color:var(--blue-eu);
+  box-shadow:0 0 0 2px var(--blue-eu-soft);
+}
+.search-bar select{
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-radius:4px;color:var(--grey-900);
+  padding:11px 12px;font-size:13px;
+  font-family:var(--font-sans);
+}
+.search-bar select:focus{
+  outline:none;border-color:var(--blue-eu);
+  box-shadow:0 0 0 2px var(--blue-eu-soft);
+}
+.search-btn{
+  background:var(--blue-eu);color:var(--white);
+  border:1px solid var(--blue-eu);
+  font-size:13px;font-weight:700;
+  padding:11px 20px;border-radius:4px;
+  cursor:pointer;letter-spacing:0.3px;
+  transition:all 0.15s;white-space:nowrap;
+}
+.search-btn:hover{
+  background:var(--blue-eu-hi);
+  border-color:var(--blue-eu-hi);
+}
+.search-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+.mode-tabs{
+  display:flex;gap:0;padding:0 10px;
+  border-bottom:1px solid var(--grey-200);
+  background:var(--white);flex-shrink:0;
+  overflow-x:auto;scrollbar-width:none;
+}
+.mode-tabs::-webkit-scrollbar{display:none}
+.mode-tab{
+  background:transparent;border:none;
+  color:var(--grey-700);font-size:12px;font-weight:500;
+  padding:10px 14px;cursor:pointer;
+  letter-spacing:0.2px;transition:all 0.15s;
+  white-space:nowrap;
+  border-bottom:3px solid transparent;
+}
+.mode-tab:hover{background:var(--grey-50);color:var(--blue-eu)}
+.mode-tab.active{
+  color:var(--blue-eu);
+  border-bottom-color:var(--blue-eu);
+  font-weight:700;
+}
+
+.results{
+  flex:1;overflow-y:auto;padding:14px;
+  min-height:0;
+}
+.result-card{
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-left:4px solid var(--blue-eu);
+  border-radius:4px;
+  padding:14px 16px;margin-bottom:10px;
+  transition:all 0.15s;
+}
+.result-card:hover{
+  border-color:var(--blue-eu);
+  box-shadow:0 4px 12px rgba(0,51,153,0.08);
+  transform:translateX(2px);
+}
+.rc-head{
+  display:flex;align-items:flex-start;gap:10px;
+  margin-bottom:6px;
+}
+.rc-title{
+  font-size:14px;font-weight:700;
+  color:var(--grey-900);flex:1;line-height:1.35;
+}
+.rc-title a{color:var(--grey-900);text-decoration:none}
+.rc-title a:hover{
+  color:var(--blue-eu);text-decoration:underline;
+}
+.rc-badges{
+  display:flex;gap:4px;flex-wrap:wrap;
+  justify-content:flex-end;flex-shrink:0;
+}
+.rc-badge{
+  font-family:var(--font-mono);font-size:9px;font-weight:700;
+  padding:3px 7px;border-radius:3px;
+  text-transform:uppercase;white-space:nowrap;
+  letter-spacing:0.5px;
+}
+.rc-badge.portal{background:var(--blue-eu);color:var(--white)}
+.rc-badge.src{background:var(--grey-100);color:var(--grey-700);border:1px solid var(--grey-200)}
+.rc-badge.pop{background:var(--gold-eu);color:var(--grey-900)}
+.rc-desc{
+  font-size:12px;color:var(--grey-700);
+  line-height:1.55;margin-bottom:8px;
+}
+.rc-meta{
+  display:flex;gap:6px;
+  font-family:var(--font-mono);font-size:10px;
+  color:var(--grey-500);flex-wrap:wrap;margin-top:8px;
+}
+.rc-meta .tag{
+  background:var(--grey-50);
+  padding:3px 8px;border-radius:3px;
+  border:1px solid var(--grey-200);
+  color:var(--grey-700);
+}
+.rc-org{
+  color:var(--grey-700);font-weight:600;
+  font-size:12px;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;
+}
+.rc-also{
+  margin-top:8px;padding:6px 10px;
+  background:var(--blue-eu-soft);
+  border-radius:3px;
+  font-family:var(--font-mono);font-size:10px;
+  color:var(--blue-eu);
+}
+.rc-also a{color:var(--blue-eu);text-decoration:none}
+.rc-also a:hover{text-decoration:underline}
+
+.empty,.loading{
+  text-align:center;padding:60px 20px;
+  color:var(--grey-500);font-size:14px;
+}
+.spin{
+  width:40px;height:40px;
+  border:3px solid var(--grey-200);
+  border-top-color:var(--blue-eu);
+  border-radius:50%;
+  animation:sp 0.8s linear infinite;
+  margin:0 auto 14px;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+.error-box{
+  background:var(--red-marianne-soft);
+  border:1px solid var(--red-marianne);
+  border-left-width:4px;
+  color:var(--red-marianne);
+  padding:16px;border-radius:4px;
+  font-size:13px;margin:12px;
+}
+
+/* Stats par portail */
+.portal-stats{
+  display:flex;gap:4px;flex-wrap:wrap;
+  padding:8px 14px;
+  background:var(--white);
+  border-bottom:1px solid var(--grey-200);
+  flex-shrink:0;
+  max-height:80px;overflow-y:auto;
+}
+.portal-stat{
+  font-family:var(--font-mono);font-size:10px;
+  padding:3px 8px;border-radius:12px;
+  background:var(--grey-50);
+  border:1px solid var(--grey-200);
+  color:var(--grey-700);
+  white-space:nowrap;
+}
+.portal-stat.ok{background:#e6f7ee;border-color:var(--green-emeraude);color:var(--green-bourgeon)}
+.portal-stat.err{background:var(--red-marianne-soft);border-color:var(--red-marianne);color:var(--red-marianne)}
+.portal-stat strong{color:inherit;font-weight:800}
+
+/* Pagination */
+.pagination-bar{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:12px 14px;
+  background:var(--white);
+  border-top:1px solid var(--grey-200);
+  border-bottom:1px solid var(--grey-200);
+  flex-shrink:0;
+}
+.pagination-info{
+  font-family:var(--font-mono);font-size:11px;
+  color:var(--grey-700);font-weight:600;
+}
+.pagination-info strong{color:var(--blue-eu);font-size:13px}
+.pagination-spacer{flex:1}
+.page-btn{
+  background:var(--white);
+  color:var(--grey-900);
+  border:1px solid var(--grey-200);
+  font-size:12px;font-weight:600;
+  padding:6px 12px;border-radius:4px;
+  cursor:pointer;transition:all 0.15s;
+  min-width:36px;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+}
+.page-btn:hover:not(:disabled){
+  border-color:var(--blue-eu);
+  color:var(--blue-eu);
+  background:var(--blue-eu-soft);
+}
+.page-btn:disabled{opacity:0.4;cursor:not-allowed}
+.page-input{
+  width:60px;text-align:center;
+  padding:6px 8px;font-size:12px;
+  font-family:var(--font-mono);font-weight:700;
+  border:1px solid var(--grey-200);
+  border-radius:4px;
+  background:var(--white);
+  color:var(--blue-eu);
+}
+.page-input:focus{
+  outline:none;border-color:var(--blue-eu);
+  box-shadow:0 0 0 2px var(--blue-eu-soft);
+}
+.page-select{
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-radius:4px;
+  color:var(--grey-900);
+  padding:6px 8px;font-size:12px;
+  font-family:var(--font-sans);
+}
+.page-select:focus{
+  outline:none;border-color:var(--blue-eu);
+}
+
+.export-group{
+  display:flex;gap:8px;
+  padding:12px 14px;
+  border-top:1px solid var(--grey-200);
+  background:var(--white);flex-shrink:0;
+}
+.export-btn{
+  flex:1;background:var(--white);
+  color:var(--grey-900);
+  border:1px solid var(--grey-200);
+  font-size:12px;font-weight:600;
+  padding:10px 14px;border-radius:4px;
+  cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.export-btn:hover{
+  border-color:var(--blue-eu);
+  color:var(--blue-eu);
+  background:var(--blue-eu-soft);
+}
+.export-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+.right{
+  background:var(--white);
+  border-left:1px solid var(--grey-200);
+  display:flex;flex-direction:column;
+  overflow:hidden;min-height:0;
+}
+.rs-head{
+  padding:14px 16px;
+  border-bottom:1px solid var(--grey-200);
+  background:var(--grey-50);
+  font-size:12px;font-weight:700;
+  color:var(--blue-eu);
+  letter-spacing:0.5px;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+  flex-shrink:0;
+}
+.rs-head::before{
+  content:'';width:4px;height:14px;
+  background:var(--gold-eu);
+}
+.rs-body{
+  flex:1;overflow-y:auto;padding:12px;
+  min-height:0;
+}
+
+.intel-panel{
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-radius:4px;margin-bottom:10px;
+  overflow:hidden;
+}
+.intel-head{
+  padding:9px 12px;
+  background:var(--grey-50);
+  border-bottom:1px solid var(--grey-200);
+  font-size:11px;font-weight:700;
+  color:var(--blue-eu);
+  letter-spacing:0.5px;text-transform:uppercase;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.intel-body{padding:10px}
+.intel-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid var(--grey-100);
+  font-size:12px;
+}
+.intel-row:last-child{border-bottom:none}
+.intel-row .k{color:var(--grey-700)}
+.intel-row .v{
+  color:var(--grey-900);font-weight:700;text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:170px;font-family:var(--font-mono);font-size:11px;
+}
+.intel-row .v.cyan{color:var(--blue-eu)}
+.intel-row .v.green{color:var(--green-bourgeon)}
+.intel-row .v.amber{color:#8a5e00}
+.intel-row .v.red{color:var(--red-marianne)}
+
+.activity-item{
+  display:flex;justify-content:space-between;
+  padding:6px 0;border-bottom:1px solid var(--grey-100);
+  font-family:var(--font-mono);font-size:11px;
+}
+.activity-item:last-child{border-bottom:none}
+.activity-item .q{
+  color:var(--grey-900);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:180px;font-weight:600;
+}
+.activity-item .t{
+  color:var(--grey-500);flex-shrink:0;margin-left:8px;
+}
+
+@media(max-width:900px){
+  .app{display:flex;flex-direction:column;height:auto;min-height:calc(100vh - 130px)}
+  .sidebar{order:1;width:100%;border-right:none;border-bottom:1px solid var(--grey-200)}
+  .sb-list{max-height:240px}
+  .center{order:2;width:100%}
+  .results{max-height:60vh}
+  .right{order:3;width:100%;border-left:none;border-top:1px solid var(--grey-200);display:none}
+  .tabs{order:3;width:100%}
+}
+@media(max-width:600px){
+  .bloc-marque{flex-direction:column;align-items:flex-start;padding:10px 12px}
+  .bloc-marque-logo{border-right:none;border-bottom:1px solid var(--grey-200);padding:0 0 6px 0}
+  .brand{font-size:13px;width:100%;justify-content:center}
+  .topbar-right{width:100%;justify-content:center;gap:12px;padding:6px 0;
+    border-top:1px solid var(--grey-200)}
+  .search-bar{padding:12px}
+  .search-bar input[type=text]{font-size:13px}
+  .search-btn{padding:11px 14px;font-size:12px}
+  .result-card{padding:12px}
+  .rc-title{font-size:13px}
+  .rc-desc{font-size:11px}
+  .pagination-bar{padding:10px;gap:6px}
+  .page-btn{padding:5px 10px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<div class="eu-band"></div>
+
+<div class="bloc-marque">
+  <div class="bloc-marque-logo">Union<br>Européenne</div>
+  <div class="bloc-marque-devise">
+    <em>Unité</em>
+    <em>Solidarité</em>
+    <em>Diversité</em>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="dot" id="statusDot"></span>
+    META MONITOR EUROPE
+    <span class="sub">/ open data</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="search">🔍 Recherche</button>
+    <button class="tab" data-tab="portals">🌍 Portails</button>
+  </div>
+
+  <div class="topbar-right">
+    <div class="topbar-stat"><span>API</span><span class="val green" id="tbStatus">—</span></div>
+    <div class="topbar-stat"><span>LATENCE</span><span class="val amber" id="tbLatency">—</span></div>
+    <div class="topbar-stat"><span>RÉSULTATS</span><span class="val" id="tbCount">—</span></div>
+    <div class="topbar-stat"><span>UPTIME</span><span class="val" id="tbUptime">—</span></div>
+  </div>
+</div>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="sb-title">🌍 Portails européens</div>
+      <div class="sb-count" id="sbCount">20 portails · 20 actifs</div>
+    </div>
+    <div class="sb-actions">
+      <button id="btnSelectAll" title="Tout cocher">Tout</button>
+      <button id="btnSelectNone" title="Tout décocher">Aucun</button>
+      <button id="btnSelectEU" title="France + Europe + grandes économies">UE</button>
+    </div>
+    <div class="sb-search">
+      <input type="text" id="sourceSearch" placeholder="🔍 Filtrer les portails...">
+    </div>
+    <div class="sb-list" id="sbList"></div>
+  </aside>
+
+  <main class="center">
+
+    <div class="search-bar">
+      <input type="text" id="queryInput" placeholder="🔍 Rechercher un jeu de données, une API…"
+             autocomplete="off" value="transport">
+      <select id="sortSelect">
+        <option value="relevance">Pertinence</option>
+        <option value="popularity">Popularité</option>
+        <option value="recent">Récence</option>
+      </select>
+      <button class="search-btn" id="searchBtn">▶ LANCER</button>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-view="results">📋 Résultats</button>
+      <button class="mode-tab" data-view="json">📄 JSON brut</button>
+      <button class="mode-tab" data-view="timing">⏱️ Timings</button>
+    </div>
+
+    <!-- Stats par portail -->
+    <div class="portal-stats" id="portalStats" hidden></div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" id="paginationBar" hidden>
+      <span class="pagination-info" id="paginationInfo">—</span>
+      <span class="pagination-spacer"></span>
+      <button class="page-btn" id="pageFirst" title="Première page">⏮</button>
+      <button class="page-btn" id="pagePrev" title="Page précédente">←</button>
+      <input type="number" class="page-input" id="pageInput" min="1" value="1" />
+      <span style="font-size:12px;color:var(--grey-500)" id="pageTotal">/ —</span>
+      <button class="page-btn" id="pageNext" title="Page suivante">→</button>
+      <button class="page-btn" id="pageLast" title="Dernière page">⏭</button>
+      <select class="page-select" id="pageSizeSelect" title="Résultats par page">
+        <option value="10">10 / page</option>
+        <option value="25" selected>25 / page</option>
+        <option value="50">50 / page</option>
+        <option value="100">100 / page</option>
+      </select>
+    </div>
+
+    <div class="results" id="resultsArea">
+      <div class="empty">
+        <div style="font-size:48px;margin-bottom:16px">🇪🇺</div>
+        <div style="font-weight:700;color:var(--grey-900);margin-bottom:8px;font-size:16px">
+          Méta-moteur Open Data Européen
+        </div>
+        <div>Recherchez dans <strong id="portalCount">20</strong> portails simultanément.</div>
+        <div style="margin-top:16px;font-size:12px;color:var(--grey-500)">
+          Backend : <code style="color:var(--blue-eu);font-weight:600">http://localhost:8001</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-group">
+      <button class="export-btn" id="exportCsv" disabled>📥 Export CSV</button>
+      <button class="export-btn" id="exportJson" disabled>📥 Export JSON</button>
+      <button class="export-btn" id="clearBtn">🗑️ Effacer</button>
+    </div>
+  </main>
+
+  <aside class="right" id="rightPanel">
+    <div class="rs-head">Intelligence</div>
+    <div class="rs-body">
+
+      <div class="intel-panel">
+        <div class="intel-head"><span>💚 ÉTAT DU BACKEND</span></div>
+        <div class="intel-body">
+          <div class="intel-row"><span class="k">Endpoint</span><span class="v cyan" id="ivEndpoint">—</span></div>
+          <div class="intel-row"><span class="k">Statut</span><span class="v green" id="ivStatus">—</span></div>
+          <div class="intel-row"><span class="k">Latence</span><span class="v amber" id="ivLatency">—</span></div>
+          <div class="intel-row"><span class="k">Dernier ping</span><span class="v" id="ivLastPing">—</span></div>
+          <div class="intel-row"><span class="k">Uptime session</span><span class="v cyan" id="ivUptime">—</span></div>
+        </div>
+      </div>
+
+      <div class="intel-panel">
+        <div class="intel-head"><span>🌍 PORTALIS SÉLECTIONNÉS</span></div>
+        <div class="intel-body">
+          <div class="intel-row"><span class="k">Total</span><span class="v cyan" id="ivPortailsTotal">—</span></div>
+          <div class="intel-row"><span class="k">Actifs</span><span class="v green" id="ivPortailsActifs">—</span></div>
+          <div class="intel-row"><span class="k">Types</span><span class="v" id="ivPortailsTypes">—</span></div>
+        </div>
+      </div>
+
+      <div class="intel-panel">
+        <div class="intel-head"><span>📊 DERNIÈRE RECHERCHE</span></div>
+        <div class="intel-body">
+          <div class="intel-row"><span class="k">Requête</span><span class="v cyan" id="ivQuery">—</span></div>
+          <div class="intel-row"><span class="k">Uniques</span><span class="v green" id="ivCount">—</span></div>
+          <div class="intel-row"><span class="k">Bruts</span><span class="v amber" id="ivRaw">—</span></div>
+          <div class="intel-row"><span class="k">Doublons</span><span class="v amber" id="ivDuplicates">—</span></div>
+          <div class="intel-row"><span class="k">Page</span><span class="v amber" id="ivPage">—</span></div>
+          <div class="intel-row"><span class="k">Temps total</span><span class="v amber" id="ivTime">—</span></div>
+          <div class="intel-row"><span class="k">Cache</span><span class="v" id="ivCache">—</span></div>
+        </div>
+      </div>
+
+      <div class="intel-panel">
+        <div class="intel-head"><span>🕐 ACTIVITÉ RÉCENTE</span></div>
+        <div class="intel-body" id="activityList">
+          <div style="text-align:center;color:var(--grey-500);font-size:11px;padding:8px">
+            Aucune activité
+          </div>
+        </div>
+      </div>
+
+      <div class="intel-panel">
+        <div class="intel-head"><span>⚙️ CONFIGURATION</span></div>
+        <div class="intel-body">
+          <div class="intel-row"><span class="k">Backend</span><span class="v cyan" id="cfgBackend">—</span></div>
+          <div class="intel-row"><span class="k">User agent</span><span class="v">MetaMonitor/1.0</span></div>
+          <div class="intel-row"><span class="k">Mode</span><span class="v" id="cfgMode">—</span></div>
+          <div class="intel-row"><span class="k">Cache</span><span class="v green" id="cfgCache">—</span></div>
+          <div class="intel-row"><span class="k">Rate-limit</span><span class="v amber" id="cfgRate">—</span></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+const API_BASE = localStorage.getItem('eu_api_base') || 'http://localhost:8001';
+const PING_INTERVAL = 30000;
+
+const state = {
+  apiBase: API_BASE,
+  lastQuery: '',
+  lastResults: [],
+  lastResponseTime: 0,
+  lastRaw: 0,
+  lastCached: false,
+  uptimeStart: Date.now(),
+  activities: [],
+  portals: [],
+  activePortals: new Set(),
+  currentPage: 1,
+  pageSize: 25,
+  totalResults: 0
+};
+
+function escapeHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function formatUptime(ms){
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
+async function pingBackend(){
+  const start = performance.now();
+  const dot = document.getElementById('statusDot');
+  try {
+    const r = await fetch(`${state.apiBase}/health`, { method: 'GET', cache: 'no-store' });
+    const latency = Math.round(performance.now() - start);
+
+    if (r.ok){
+      const data = await r.json();
+      dot.classList.remove('offline');
+      document.getElementById('tbStatus').textContent = 'ONLINE';
+      document.getElementById('tbStatus').className = 'val green';
+      document.getElementById('ivStatus').textContent = '● EN LIGNE';
+      document.getElementById('ivStatus').className = 'v green';
+      document.getElementById('ivLatency').textContent = latency + ' ms';
+      document.getElementById('ivLatency').className = 'v ' + (latency < 200 ? 'green' : latency < 500 ? 'amber' : 'red');
+      document.getElementById('tbLatency').textContent = latency + ' ms';
+      document.getElementById('tbLatency').className = 'val ' + (latency < 200 ? 'green' : latency < 500 ? 'amber' : 'red');
+      document.getElementById('ivLastPing').textContent = new Date().toLocaleTimeString('fr-FR');
+
+      // Cache + ratelimit depuis /health
+      if (data.cache){
+        document.getElementById('cfgCache').textContent = data.cache.type === 'redis' ? 'Redis' : 'Mémoire';
+      }
+      if (data.ratelimit){
+        document.getElementById('cfgRate').textContent = `${data.ratelimit.requests}/${data.ratelimit.window}s`;
+      }
+    } else {
+      throw new Error('HTTP ' + r.status);
+    }
+  } catch(err){
+    dot.classList.add('offline');
+    document.getElementById('tbStatus').textContent = 'OFFLINE';
+    document.getElementById('tbStatus').className = 'val red';
+    document.getElementById('ivStatus').textContent = '● HORS LIGNE';
+    document.getElementById('ivStatus').className = 'v red';
+    document.getElementById('ivLatency').textContent = '—';
+    document.getElementById('tbLatency').textContent = '—';
+  }
+}
+
+async function loadPortals(){
+  try {
+    const r = await fetch(`${state.apiBase}/portals`);
+    const data = await r.json();
+    state.portals = data.portals;
+    state.activePortals = new Set(state.portals.map(p => p.key));
+    renderPortals();
+    document.getElementById('portalCount').textContent = state.portals.length;
+
+    // Types
+    const types = new Set(state.portals.map(p => p.type));
+    document.getElementById('ivPortailsTypes').textContent = [...types].join(', ');
+  } catch (err){
+    document.getElementById('sbList').innerHTML =
+      `<div class="error-box" style="margin:8px;font-size:11px">Backend inaccessible</div>`;
+  }
+}
+
+function renderPortals(){
+  const list = document.getElementById('sbList');
+  const search = document.getElementById('sourceSearch').value.toLowerCase();
+
+  const filtered = state.portals.filter(p =>
+    p.name.toLowerCase().includes(search) || p.key.includes(search) || p.type.includes(search)
+  );
+
+  document.getElementById('sbCount').textContent =
+    `${state.portals.length} portails · ${state.activePortals.size} actifs`;
+
+  document.getElementById('ivPortailsTotal').textContent = state.portals.length;
+  document.getElementById('ivPortailsActifs').textContent = state.activePortals.size;
+  document.getElementById('ivPortailsActifs').className = 'v ' +
+    (state.activePortals.size === 0 ? 'red' :
+     state.activePortals.size === state.portals.length ? 'green' : 'amber');
+
+  if (!filtered.length){
+    list.innerHTML = '<div class="loading" style="padding:20px;font-size:11px">Aucun portail</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(p => `
+    <div class="portal-item ${state.activePortals.has(p.key) ? 'active' : ''}"
+         data-key="${p.key}" title="${escapeHtml(p.name)} — ${escapeHtml(p.type)}">
+      <div class="portal-check">✓</div>
+      <span class="portal-flag">${p.flag}</span>
+      <div class="portal-info">
+        <div class="portal-name">${escapeHtml(p.name)}</div>
+        <div class="portal-type">${escapeHtml(p.type)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.portal-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.key;
+      if (state.activePortals.has(key)){
+        state.activePortals.delete(key);
+      } else {
+        state.activePortals.add(key);
+      }
+      renderPortals();
+    });
+  });
+}
+
+async function runSearch(page = 1){
+  const q = document.getElementById('queryInput').value.trim();
+  const sort = document.getElementById('sortSelect').value;
+
+  if (!q){
+    showResults(`<div class="empty">Tape un mot-clé pour lancer la recherche.</div>`);
+    return;
+  }
+
+  if (state.activePortals.size === 0){
+    showResults(`<div class="error-box"><strong>❌ Aucun portail sélectionné.</strong><br><br>Coche au moins un portail dans la sidebar.</div>`);
+    return;
+  }
+
+  state.currentPage = page;
+
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ RECHERCHE...';
+
+  showResults(`
+    <div class="loading">
+      <div class="spin"></div>
+      Recherche « ${escapeHtml(q)} » sur ${state.activePortals.size} portails — page ${page}...
+    </div>
+  `);
+
+  const start = performance.now();
+
+  try {
+    const url = new URL(`${state.apiBase}/search`);
+    url.searchParams.set('q', q);
+    url.searchParams.set('sort', sort);
+    url.searchParams.set('page', page);
+    url.searchParams.set('page_size', state.pageSize);
+    url.searchParams.set('portals', [...state.activePortals].join(','));
+
+    const r = await fetch(url.toString());
+    const elapsed = Math.round(performance.now() - start);
+
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+
+    state.lastQuery = q;
+    state.lastResults = data.results || [];
+    state.lastResponseTime = elapsed;
+    state.totalResults = data.count || 0;
+    state.lastRaw = data.total_raw || 0;
+    state.lastCached = data.cached || false;
+
+    document.getElementById('tbCount').textContent = data.count || 0;
+    document.getElementById('ivQuery').textContent = q;
+    document.getElementById('ivCount').textContent = data.count || 0;
+    document.getElementById('ivRaw').textContent = data.total_raw || 0;
+    document.getElementById('ivDuplicates').textContent = (data.total_raw || 0) - (data.count || 0);
+    document.getElementById('ivPage').textContent = `${page} / ${Math.max(1, Math.ceil((data.count || 1) / state.pageSize))}`;
+    document.getElementById('ivTime').textContent = elapsed + ' ms';
+    document.getElementById('ivCache').textContent = data.cached ? '✅ HIT' : '❌ MISS';
+    document.getElementById('ivCache').className = 'v ' + (data.cached ? 'green' : 'amber');
+
+    document.getElementById('exportCsv').disabled = false;
+    document.getElementById('exportJson').disabled = false;
+
+    state.activities.unshift({
+      q: q,
+      count: data.count || 0,
+      time: new Date()
+    });
+    state.activities = state.activities.slice(0, 10);
+    renderActivities();
+
+    renderPortalStats(data.portal_stats);
+    renderResults(data);
+    updatePaginationUI();
+    document.getElementById('resultsArea').scrollTop = 0;
+
+  } catch(err){
+    showResults(`
+      <div class="error-box">
+        <strong>❌ Erreur :</strong> ${escapeHtml(err.message)}<br><br>
+        <span style="color:var(--grey-700)">Vérifie que le backend tourne sur <code>${escapeHtml(state.apiBase)}</code>.</span>
+      </div>
+    `);
+    document.getElementById('paginationBar').hidden = true;
+    document.getElementById('portalStats').hidden = true;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ LANCER';
+  }
+}
+
+function renderPortalStats(stats){
+  const el = document.getElementById('portalStats');
+  if (!stats || !Object.keys(stats).length){
+    el.hidden = true;
+    return;
+  }
+
+  el.innerHTML = Object.entries(stats).map(([key, s]) => {
+    const cls = s.error ? 'err' : 'ok';
+    const val = s.error ? '✗' : s.count;
+    const title = s.error ? s.error : `${s.duration_ms}ms`;
+    return `<span class="portal-stat ${cls}" title="${escapeHtml(title)}">
+      ${s.flag} <strong>${val}</strong>
+    </span>`;
+  }).join('');
+  el.hidden = false;
+}
+
+function showResults(html){
+  document.getElementById('resultsArea').innerHTML = html;
+}
+
+function renderResults(data){
+  const results = data.results || [];
+  if (!results.length){
+    showResults(`<div class="empty">Aucun résultat pour « ${escapeHtml(data.query || '(vide)')} ».</div>`);
+    return;
+  }
+
+  const html = results.map(item => {
+    const badges = `
+      <span class="rc-badge portal">${item.source_flag || '🌐'} ${escapeHtml(item.source_portal || 'N/A')}</span>
+      <span class="rc-badge src">${escapeHtml(item.source_type || '?')}</span>
+      ${item.popularity ? `<span class="rc-badge pop">★ ${item.popularity}</span>` : ''}
+    `;
+    const tags = (item.tags || []).slice(0, 5)
+      .map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+    const url = item.url || '#';
+
+    const alsoIn = (item.also_in && item.also_in.length) ? `
+      <div class="rc-also">
+        🔁 Aussi disponible sur :
+        ${item.also_in.map(a =>
+          `<a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" style="margin-left:6px">${a.flag} ${escapeHtml(a.portal)}</a>`
+        ).join('')}
+      </div>
+    ` : '';
+
+    return `
+      <div class="result-card">
+        <div class="rc-head">
+          <div class="rc-title">
+            <a href="${escapeHtml(url)}" target="_blank" rel="noopener">
+              ${escapeHtml(item.title || item.id)}
+            </a>
+          </div>
+          <div class="rc-badges">${badges}</div>
+        </div>
+        ${item.organization ? `<div class="rc-org">🏢 ${escapeHtml(item.organization)}</div>` : ''}
+        ${item.description ? `<div class="rc-desc">${escapeHtml(item.description)}</div>` : ''}
+        ${tags ? `<div class="rc-meta">${tags}</div>` : ''}
+        ${alsoIn}
+      </div>
+    `;
+  }).join('');
+
+  const header = `
+    <div style="font-size:12px;color:var(--grey-700);
+                margin-bottom:12px;padding:10px 14px;background:var(--white);
+                border-radius:4px;border-left:4px solid var(--blue-eu);
+                box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+      <strong style="color:var(--blue-eu)">${data.count.toLocaleString('fr-FR')} résultat(s) uniques</strong>
+      sur ${data.total_raw || data.count} bruts
+      · page ${state.currentPage}
+      · ${data.duration_ms}ms
+      ${data.cached ? ' · 📦 CACHE' : ''}
+      · ${state.activePortals.size} portails
+    </div>
+  `;
+
+  showResults(header + html);
+}
+
+function updatePaginationUI(){
+  const bar = document.getElementById('paginationBar');
+  const info = document.getElementById('paginationInfo');
+  const input = document.getElementById('pageInput');
+  const total = document.getElementById('pageTotal');
+  const first = document.getElementById('pageFirst');
+  const prev = document.getElementById('pagePrev');
+  const next = document.getElementById('pageNext');
+  const last = document.getElementById('pageLast');
+
+  const totalPages = Math.max(1, Math.ceil(state.totalResults / state.pageSize));
+  const current = state.currentPage;
+  const maxReachable = Math.min(totalPages, 10);
+
+  info.innerHTML = `<strong>${state.totalResults.toLocaleString('fr-FR')}</strong> résultats · page <strong>${current}</strong> / ${maxReachable}`;
+  input.value = current;
+  input.max = maxReachable;
+  total.textContent = `/ ${maxReachable}`;
+
+  first.disabled = current <= 1;
+  prev.disabled = current <= 1;
+  next.disabled = current >= maxReachable;
+  last.disabled = current >= maxReachable;
+
+  bar.hidden = false;
+}
+
+function renderActivities(){
+  const el = document.getElementById('activityList');
+  if (!state.activities.length){
+    el.innerHTML = '<div style="text-align:center;color:var(--grey-500);font-size:11px;padding:8px">Aucune activité</div>';
+    return;
+  }
+  el.innerHTML = state.activities.map(a => `
+    <div class="activity-item">
+      <span class="q">"${escapeHtml(a.q)}" → ${a.count}</span>
+      <span class="t">${a.time.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</span>
+    </div>
+  `).join('');
+}
+
+// Pagination
+document.getElementById('pageFirst').addEventListener('click', () => runSearch(1));
+document.getElementById('pagePrev').addEventListener('click', () => runSearch(Math.max(1, state.currentPage - 1)));
+document.getElementById('pageNext').addEventListener('click', () => runSearch(state.currentPage + 1));
+document.getElementById('pageLast').addEventListener('click', () => {
+  const totalPages = Math.max(1, Math.ceil(state.totalResults / state.pageSize));
+  runSearch(Math.min(totalPages, 10));
+});
+document.getElementById('pageInput').addEventListener('change', (e) => {
+  const p = parseInt(e.target.value) || 1;
+  const totalPages = Math.max(1, Math.ceil(state.totalResults / state.pageSize));
+  runSearch(Math.max(1, Math.min(Math.min(totalPages, 10), p)));
+});
+document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
+  state.pageSize = parseInt(e.target.value);
+  runSearch(1);
+});
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    if (t.dataset.tab === 'search'){
+      document.getElementById('resultsArea').style.display = 'block';
+    } else if (t.dataset.tab === 'portals'){
+      document.getElementById('resultsArea').innerHTML = `
+        <div class="empty">
+          <div style="font-size:48px;margin-bottom:14px">🌍</div>
+          <div style="font-weight:700;color:var(--grey-900);margin-bottom:10px;font-size:16px">
+            ${state.portals.length} portails open data européens
+          </div>
+          <div style="font-size:13px;line-height:2;margin-top:16px;text-align:left;
+                      max-width:640px;margin-left:auto;margin-right:auto">
+            ${state.portals.map(p => `
+              <div style="padding:8px 0;border-bottom:1px solid var(--grey-100)">
+                <span style="font-size:20px">${p.flag}</span>
+                <strong style="color:var(--grey-900);margin-left:8px">${escapeHtml(p.name)}</strong>
+                <span style="font-family:var(--font-mono);font-size:10px;
+                             color:var(--blue-eu);margin-left:8px">
+                  [${escapeHtml(p.type)}]
+                </span>
+                <div style="font-family:var(--font-mono);font-size:10px;
+                            color:var(--grey-500);margin-left:32px;margin-top:4px">
+                  ${escapeHtml(p.web)}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="margin-top:20px;font-size:12px;color:var(--grey-500)">
+            Coche/décoche les portails dans la sidebar pour filtrer.
+          </div>
+        </div>
+      `;
+    }
+  });
+});
+
+// Mode tabs
+document.querySelectorAll('.mode-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const view = t.dataset.view;
+    if (view === 'json'){
+      showResults(`<pre style="font-family:var(--font-mono);font-size:11px;
+        color:var(--grey-700);background:var(--white);padding:16px;border-radius:4px;
+        overflow-x:auto;border:1px solid var(--grey-200);max-height:70vh;
+        line-height:1.5">
+${escapeHtml(JSON.stringify(state.lastResults.slice(0, 5), null, 2))}
+      </pre>`);
+    } else if (view === 'timing'){
+      showResults(`
+        <div class="intel-panel" style="max-width:480px">
+          <div class="intel-head"><span>⏱️ TIMINGS DERNIÈRE RECHERCHE</span></div>
+          <div class="intel-body">
+            <div class="intel-row"><span class="k">Requête</span><span class="v cyan">${escapeHtml(state.lastQuery || '—')}</span></div>
+            <div class="intel-row"><span class="k">Page</span><span class="v cyan">${state.currentPage}</span></div>
+            <div class="intel-row"><span class="k">Portails actifs</span><span class="v amber">${state.activePortals.size}</span></div>
+            <div class="intel-row"><span class="k">Temps total</span><span class="v green">${state.lastResponseTime} ms</span></div>
+            <div class="intel-row"><span class="k">Résultats uniques</span><span class="v green">${state.totalResults.toLocaleString('fr-FR')}</span></div>
+            <div class="intel-row"><span class="k">Résultats bruts</span><span class="v amber">${state.lastRaw}</span></div>
+            <div class="intel-row"><span class="k">Cache</span><span class="v ${state.lastCached ? 'green' : 'amber'}">${state.lastCached ? '✅ HIT' : '❌ MISS'}</span></div>
+          </div>
+        </div>
+      `);
+    } else {
+      if (state.lastResults.length){
+        renderResults({results: state.lastResults, query: state.lastQuery, count: state.totalResults, total_raw: state.lastRaw, duration_ms: state.lastResponseTime, cached: state.lastCached});
+      } else {
+        showResults(`<div class="empty">Lance une recherche pour voir les résultats.</div>`);
+      }
+    }
+  });
+});
+
+// Boutons sélection
+document.getElementById('btnSelectAll').addEventListener('click', () => {
+  state.activePortals = new Set(state.portals.map(p => p.key));
+  renderPortals();
+});
+document.getElementById('btnSelectNone').addEventListener('click', () => {
+  state.activePortals = new Set();
+  renderPortals();
+});
+document.getElementById('btnSelectEU').addEventListener('click', () => {
+  state.activePortals = new Set(['fr', 'eu', 'de', 'es', 'it', 'nl', 'be', 'at']);
+  renderPortals();
+});
+
+// Export
+document.getElementById('exportCsv').addEventListener('click', () => {
+  if (!state.lastQuery) return;
+  const params = new URLSearchParams({
+    q: state.lastQuery,
+    format: 'csv',
+    max_pages: 5,
+    portals: [...state.activePortals].join(',')
+  });
+  window.location.href = `${state.apiBase}/export?${params.toString()}`;
+});
+
+document.getElementById('exportJson').addEventListener('click', () => {
+  if (!state.lastQuery) return;
+  const params = new URLSearchParams({
+    q: state.lastQuery,
+    format: 'json',
+    max_pages: 5,
+    portals: [...state.activePortals].join(',')
+  });
+  window.open(`${state.apiBase}/export?${params.toString()}`, '_blank');
+});
+
+// Clear
+document.getElementById('clearBtn').addEventListener('click', () => {
+  state.lastResults = [];
+  state.lastQuery = '';
+  state.totalResults = 0;
+  state.lastRaw = 0;
+  state.currentPage = 1;
+  document.getElementById('tbCount').textContent = '—';
+  document.getElementById('ivQuery').textContent = '—';
+  document.getElementById('ivCount').textContent = '—';
+  document.getElementById('ivRaw').textContent = '—';
+  document.getElementById('ivDuplicates').textContent = '—';
+  document.getElementById('ivPage').textContent = '—';
+  document.getElementById('ivTime').textContent = '—';
+  document.getElementById('ivCache').textContent = '—';
+  document.getElementById('exportCsv').disabled = true;
+  document.getElementById('exportJson').disabled = true;
+  document.getElementById('paginationBar').hidden = true;
+  document.getElementById('portalStats').hidden = true;
+  showResults(`
+    <div class="empty">
+      <div style="font-size:48px;margin-bottom:16px">🇪🇺</div>
+      <div style="font-weight:700;color:var(--grey-900);margin-bottom:8px;font-size:16px">
+        Méta-moteur Open Data Européen
+      </div>
+      <div>Tape un mot-clé pour lancer la recherche.</div>
+    </div>
+  `);
+});
+
+document.getElementById('searchBtn').addEventListener('click', () => runSearch(1));
+document.getElementById('queryInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') runSearch(1);
+});
+document.getElementById('sourceSearch').addEventListener('input', renderPortals);
+
+setInterval(() => {
+  const uptime = Date.now() - state.uptimeStart;
+  document.getElementById('ivUptime').textContent = formatUptime(uptime);
+  document.getElementById('tbUptime').textContent = formatUptime(uptime);
+}, 1000);
+
+async function init(){
+  document.getElementById('cfgBackend').textContent = state.apiBase;
+  document.getElementById('ivEndpoint').textContent = state.apiBase.replace(/^https?:\/\//, '');
+  document.getElementById('cfgMode').textContent = 'europe-monitor';
+  await pingBackend();
+  await loadPortals();
+  setInterval(pingBackend, PING_INTERVAL);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

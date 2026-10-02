@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🇪🇺 Meta Monitor Europe</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f6f6f6;color:#1e1e1e;font-size:14px;line-height:1.5}
+.band{height:6px;background:linear-gradient(to right,#003399 33%,#ffcc00 33%,#ffcc00 66%,#fff 66%)}
+header{background:#003399;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+header h1{font-size:17px;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;gap:10px}
+header .flag{font-size:24px}
+header .sub{font-weight:400;font-size:12px;opacity:.85;font-family:monospace}
+header .status{margin-left:auto;display:flex;gap:14px;font-family:monospace;font-size:11px;align-items:center}
+header .status .pill{background:rgba(255,255,255,.15);padding:3px 10px;border-radius:20px;color:#ffcc00;font-weight:700}
+header .status .dot{width:10px;height:10px;border-radius:50%;background:#00a95f;box-shadow:0 0 0 3px rgba(0,169,95,.3);animation:p 1.8s infinite}
+header .status .dot.off{background:#e1000f;box-shadow:0 0 0 3px rgba(225,0,15,.3);animation:none}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.4}}
+.container{max-width:1280px;margin:0 auto;padding:24px}
+.search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.search-bar input{flex:1;min-width:260px;padding:12px 16px;font-size:15px;border:1px solid #ddd;border-radius:8px;background:#fff}
+.search-bar input:focus{outline:none;border-color:#003399;box-shadow:0 0 0 3px #e6ecff}
+.search-bar select{padding:12px 16px;font-size:14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer}
+.search-bar button{background:#003399;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
+.search-bar button:hover:not(:disabled){background:#0055ff}
+.search-bar button:disabled{opacity:.5;cursor:not-allowed}
+.stats-bar{background:#fff;padding:12px 20px;border-radius:8px;margin-bottom:20px;font-family:monospace;font-size:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.stat-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:#f6f6f6;border:1px solid #e5e5e5}
+.stat-pill.ok{background:#e6f7ee;border-color:#00a95f;color:#00a95f}
+.stat-pill.err{background:#ffe9e9;border-color:#e1000f;color:#e1000f}
+.card{background:#fff;border-left:4px solid #003399;border-radius:8px;padding:16px 20px;margin-bottom:12px;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card:hover{box-shadow:0 4px 16px rgba(0,51,153,.1);transform:translateY(-1px)}
+.card .head{display:flex;gap:12px;margin-bottom:8px;align-items:flex-start}
+.card h3{font-size:15px;font-weight:700;flex:1;line-height:1.35}
+.card h3 a{color:#1e1e1e;text-decoration:none}
+.card h3 a:hover{color:#003399;text-decoration:underline}
+.card .badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.card .badge{font-family:monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:#003399;color:#fff;text-transform:uppercase;white-space:nowrap}
+.card .badge.src{background:#eee;color:#3a3a3a}
+.card .badge.pop{background:#ffcc00;color:#003399}
+.card .org{font-size:12px;color:#3a3a3a;font-weight:600;margin-bottom:6px}
+.card .desc{font-size:12px;color:#3a3a3a;line-height:1.6;margin-bottom:8px}
+.card .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #eee;font-family:monospace;font-size:10px}
+.card .tags .tag{background:#f6f6f6;padding:3px 8px;border-radius:3px;border:1px solid #e5e5e5;color:#3a3a3a}
+.card .also{margin-top:10px;padding:8px 10px;background:#e6ecff;border-radius:4px;font-size:11px;color:#003399}
+.empty,.loading{text-align:center;padding:80px 20px;color:#929292}
+.spin{width:44px;height:44px;border:3px solid #ddd;border-top-color:#003399;border-radius:50%;animation:s .8s linear infinite;margin:0 auto 16px}
+@keyframes s{to{transform:rotate(360deg)}}
+.err-box{background:#ffe9e9;border-left:4px solid #e1000f;color:#e1000f;padding:16px;border-radius:8px;margin:12px 0}
+.footer{text-align:center;padding:40px 20px;font-size:12px;color:#929292}
+</style>
+</head>
+<body>
+<div class="band"></div>
+
+<header>
+  <h1><span class="flag">🇪🇺</span> META MONITOR EUROPE <span class="sub">/ open data</span></h1>
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <span>API</span><span class="pill" id="tbStatus">—</span>
+    <span>LATENCE</span><span class="pill" id="tbLatency">—</span>
+    <span>RÉSULTATS</span><span class="pill" id="tbCount">—</span>
+  </div>
+</header>
+
+<div class="container">
+  <div class="search-bar">
+    <input type="text" id="q" placeholder="🔍 transport, énergie, climat…" value="transport">
+    <select id="sort">
+      <option value="relevance">Pertinence</option>
+      <option value="popularity">Popularité</option>
+      <option value="recent">Récence</option>
+    </select>
+    <button onclick="search()" id="btn">▶ RECHERCHER</button>
+  </div>
+
+  <div class="stats-bar" id="statsBar" style="display:none"></div>
+
+  <div id="results">
+    <div class="empty">
+      <div style="font-size:64px;margin-bottom:20px">🇪🇺</div>
+      <div style="font-weight:700;font-size:18px;color:#1e1e1e;margin-bottom:8px">Meta Monitor Europe</div>
+      <div style="font-size:14px">Recherchez dans <strong id="count">20</strong> portails open data européens</div>
+      <div style="margin-top:16px;font-size:12px;color:#929292;font-family:monospace">Backend : http://localhost:8001\</div\>
+    </div>
+  </div>
+
+  <div class="footer">
+    Meta Monitor Europe · 20 portails · <a href="http://localhost:8001/docs" target="_blank" style="color:#003399">API docs</a>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8001';
+
+function esc(s){return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+async function ping(){
+  const t0 = performance.now();
+  try{
+    const r = await fetch(API + '/health',{cache:'no-store'});
+    const ms = Math.round(performance.now() - t0);
+    if(r.ok){
+      document.getElementById('dot').classList.remove('off');
+      document.getElementById('tbStatus').textContent = 'ONLINE';
+      document.getElementById('tbStatus').style.color = '#00a95f';
+      document.getElementById('tbLatency').textContent = ms + 'ms';
+    } else throw 0;
+  }catch(e){
+    document.getElementById('dot').classList.add('off');
+    document.getElementById('tbStatus').textContent = 'OFFLINE';
+    document.getElementById('tbStatus').style.color = '#e1000f';
+    document.getElementById('tbLatency').textContent = '—';
+  }
+}
+
+async function loadPortals(){
+  try{
+    const r = await fetch(API + '/portals');
+    const d = await r.json();
+    document.getElementById('count').textContent = d.count;
+  }catch(e){}
+}
+
+async function search(){
+  const q = document.getElementById('q').value.trim();
+  const sort = document.getElementById('sort').value;
+  if(!q) return;
+
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ RECHERCHE...';
+
+  document.getElementById('results').innerHTML =
+    '<div class="loading"><div class="spin"></div>Recherche sur 20 portails européens…</div>';
+
+  try{
+    const url = `${API}/search?q=${encodeURIComponent(q)}&sort=${sort}&page_size=25`;
+    const t0 = performance.now();
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+
+    document.getElementById('tbCount').textContent = data.count;
+
+    // Stats bar
+    const stats = data.portal_stats || {};
+    const pills = Object.entries(stats).map(([k,s]) => {
+      const cls = s.error ? 'err' : 'ok';
+      const val = s.error ? '✗' : s.count;
+      return `<div class="stat-pill ${cls}" title="${esc(s.error||'OK')} ${s.duration_ms}ms">${s.flag} <strong>${val}</strong></div>`;
+    }).join('');
+    document.getElementById('statsBar').innerHTML =
+      `<span class="stat-pill ok">● ${data.count} uniques</span>
+       <span class="stat-pill">${data.total_raw} bruts</span>
+       <span class="stat-pill">${data.duration_ms}ms</span>
+       ${data.cached ? '<span class="stat-pill ok">📦 CACHE</span>' : ''}
+       ${pills}`;
+    document.getElementById('statsBar').style.display = 'flex';
+
+    if(!data.results.length){
+      document.getElementById('results').innerHTML = '<div class="empty">Aucun résultat</div>';
+      return;
+    }
+
+    document.getElementById('results').innerHTML = data.results.map(item => {
+      const tags = (item.tags||[]).slice(0,6).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+      const also = (item.also_in||[]).length ? `
+        <div class="also">🔁 Aussi sur : ${item.also_in.map(a=>`<a href="${esc(a.url)}" target="_blank" style="color:#003399">${a.flag} ${esc(a.portal)}</a>`).join(' · ')}</div>
+      ` : '';
+      return `
+        <div class="card">
+          <div class="head">
+            <h3><a href="${esc(item.url)}" target="_blank">${esc(item.title || item.id)}</a></h3>
+            <div class="badges">
+              <span class="badge">${item.source_flag} ${esc(item.source_portal)}</span>
+              <span class="badge src">${esc(item.source_type)}</span>
+              ${item.popularity ? `<span class="badge pop">★ ${item.popularity}</span>` : ''}
+            </div>
+          </div>
+          ${item.organization ? `<div class="org">🏢 ${esc(item.organization)}</div>` : ''}
+          ${item.description ? `<div class="desc">${esc(item.description)}</div>` : ''}
+          ${tags ? `<div class="tags">${tags}</div>` : ''}
+          ${also}
+        </div>
+      `;
+    }).join('');
+  }catch(e){
+    document.getElementById('results').innerHTML =
+      `<div class="err-box"><strong>❌ Erreur :</strong> ${esc(e.message)}<br><br>Vérifiez que le backend tourne sur <code>${API}</code>.</div>`;
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '▶ RECHERCHER';
+  }
+}
+
+document.getElementById('q').addEventListener('keypress', e => { if(e.key==='Enter') search(); });
+
+ping();
+loadPortals();
+setInterval(ping, 30000);
+</script>
+</body>
+</html>
